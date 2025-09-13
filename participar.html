@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participar - Kahoot</title>
+    <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon" onerror="this.href='favicon.ico'">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #ffe53b 0%, #fd3838 100%);
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        header {
+            background: #262626;
+            color: #fff;
+            padding: 32px 0 18px;
+            font-size: 2.2em;
+            width: 100%;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 6px 32px rgba(0, 0, 0, 0.13);
+            padding: 38px 32px;
+            max-width: 410px;
+            width: 92%;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            border: 4px solid #7c30dd;
+        }
+        .input-kahoot {
+            padding: 14px 18px;
+            border: 2px solid #7c30dd;
+            border-radius: 50px;
+            font-size: 1.08em;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            width: 90%;
+            max-width: 260px;
+            margin-bottom: 8px;
+            background: #f7f3ff;
+            color: #3a006a;
+            font-weight: 500;
+            text-align: center;
+        }
+        .input-kahoot:focus {
+            border: 2.5px solid #ff4f70;
+            box-shadow: 0 0 0 2px rgba(255, 229, 59, 0.33);
+        }
+        .btn-save {
+            background: #ffe53b;
+            color: #7c30dd;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 1.08em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px rgba(255, 229, 59, 0.1);
+            margin-top: 14px;
+        }
+        .btn-save:hover {
+            background: #ff4f70;
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+        }
+        .saudacao {
+            color: #7c30dd;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 10px;
+            min-height: 24px;
+            text-align: center;
+        }
+        .tab-content {
+            display: none;
+            width: 100%;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .opcao-kahoot {
+            background: #f7f3ff;
+            border: 2px solid #7c30dd;
+            border-radius: 50px;
+            padding: 12px 18px;
+            font-size: 1.08em;
+            color: #3a006a;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            cursor: pointer;
+        }
+        .opcao-kahoot span {
+            flex: 1;
+            font-size: 1.12em;
+        }
+        .opcao-kahoot input[type="radio"] {
+            accent-color: #7c30dd;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .opcao-kahoot.selected,
+        .opcao-kahoot:hover {
+            border: 2.5px solid #ff4f70;
+            box-shadow: 0 0 0 2px rgba(255, 229, 59, 0.33);
+            background: #fff0f6;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 10px;
+            background: linear-gradient(90deg, #7c30dd 60%, #ff4f70 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+        }
+        .question-indicator {
+            font-size: 1.2em;
+            color: #7c30dd;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .question-text {
+            font-size: 1.25em;
+            color: #7c30dd;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .question-subtext {
+            font-size: 1em;
+            font-weight: 500;
+            color: #444;
+            text-align: center;
+        }
+        .options-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 18px;
+        }
+    </style>
+    <script>
+        let interval = null;
+        let tempo = 15;
+        const respondido = {};
+        let currentTab = 1;
+
+        function iniciarTimer(tabIndex) {
+            const timerDiv = document.getElementById('timer' + tabIndex);
+            tempo = 15;
+            timerDiv.textContent = `Tempo restante: ${tempo} segundos`;
+            updateProgressBar(tabIndex);
+            
+            if (interval) clearInterval(interval);
+            const radios = document.querySelectorAll(`#tab${tabIndex} input[type="radio"]`);
+            if (!respondido[tabIndex]) {
+                radios.forEach(r => r.disabled = false);
+            }
+            const btnProxima = document.getElementById('btn-proxima-' + tabIndex);
+            if (btnProxima) btnProxima.style.display = 'none';
+
+            interval = setInterval(() => {
+                tempo--;
+                if (tempo > 0) {
+                    timerDiv.textContent = `Tempo restante: ${tempo} segundos`;
+                    updateProgressBar(tabIndex, tempo);
+                } else {
+                    timerDiv.textContent = "Tempo esgotado!";
+                    clearInterval(interval);
+                    radios.forEach(r => r.disabled = true);
+                    if (!respondido[tabIndex]) {
+                        respondido[tabIndex] = true;
+                        if (btnProxima) btnProxima.style.display = 'inline-block';
+                        if (tabIndex < 10 && !document.querySelector(`input[name="resposta${tabIndex}"]:checked`)) {
+                            setTimeout(() => {
+                                showTab(tabIndex + 1);
+                            }, 2000);
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateProgressBar(tabIndex, currentTime = 15) {
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                const widthPercentage = (currentTime / 15) * 100;
+                progressBar.style.width = widthPercentage + '%';
+            }
+            const questionIndicator = document.getElementById('question-indicator');
+            if (questionIndicator) {
+                questionIndicator.textContent = `Pergunta ${tabIndex} de 10`;
+            }
+        }
+
+        function showTab(tabIndex) {
+            currentTab = tabIndex;
+            for (let i = 1; i <= 10; i++) {
+                const tab = document.getElementById('tab' + i);
+                if (tab) tab.classList.remove('active');
+            }
+            const activeTab = document.getElementById('tab' + tabIndex);
+            if (activeTab) activeTab.classList.add('active');
+            iniciarTimer(tabIndex);
+        }
+
+        function selecionarOpcao(tab, opcao) {
+            if (respondido[tab]) {
+                alert("Você já respondeu esta pergunta e não pode trocar a opção.");
+                return;
+            }
+            const radios = document.querySelectorAll(`#tab${tab} input[type="radio"]`);
+            if (radios.length && radios[0].disabled) {
+                alert("O tempo para responder esta pergunta acabou!");
+                return;
+            }
+            const total = (tab === 3 || tab === 10) ? 2 : (tab === 2 || tab === 5 || tab === 6 || tab === 7 || tab === 8 || tab === 9) ? 4 : 5;
+            for (let i = 1; i <= total; i++) {
+                const label = document.getElementById(`label-opcao${tab}-${i}`);
+                if (label) label.classList.remove('selected');
+            }
+            const selected = document.getElementById(`label-opcao${tab}-${opcao}`);
+            if (selected) selected.classList.add('selected');
+        }
+
+        function enviarResposta(tabIndex) {
+            clearInterval(interval);
+            document.getElementById('timer' + tabIndex).textContent = "Resposta enviada!";
+            respondido[tabIndex] = true;
+            const radios = document.querySelectorAll(`#tab${tabIndex} input[type="radio"]`);
+            radios.forEach(r => r.disabled = true);
+            const btnProxima = document.getElementById('btn-proxima-' + tabIndex);
+            if (btnProxima) btnProxima.style.display = 'inline-block';
+        }
+
+        window.onload = function () {
+            document.getElementById('progress-bar').style.width = '100%';
+            showTab(1);
+        };
+    </script>
+</head>
+<body>
+    <header>
+        <span style="color:#ffe53b;">Kahoot</span> <span style="color:#ff4f70;">FAK</span>
+    </header>
+    <div class="card">
+        <div class="question-indicator" id="question-indicator">Pergunta 1 de 10</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <!-- Tab 1 -->
+        <div id="tab1" class="tab-content active">
+            <p class="question-text" id="question1">Quem escreveu o livro dos espíritos?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question1">
+                <label class="opcao-kahoot" id="label-opcao1-1">
+                    <input type="radio" name="resposta1" value="1" onclick="selecionarOpcao(1,1)" aria-label="Allan Kardec">
+                    <span>Allan Kardec</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao1-2">
+                    <input type="radio" name="resposta1" value="2" onclick="selecionarOpcao(1,2)" aria-label="Chico Xavier">
+                    <span>Chico Xavier</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao1-3">
+                    <input type="radio" name="resposta1" value="3" onclick="selecionarOpcao(1,3)" aria-label="Emmanuel">
+                    <span>Emmanuel</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao1-4">
+                    <input type="radio" name="resposta1" value="4" onclick="selecionarOpcao(1,4)" aria-label="Bezerra de Menezes">
+                    <span>Bezerra de Menezes</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao1-5">
+                    <input type="radio" name="resposta1" value="5" onclick="selecionarOpcao(1,5)" aria-label="André Luiz">
+                    <span>André Luiz</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 1" onclick="enviarResposta(1)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-1" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(2)">Próxima Pergunta</button>
+            <div id="timer1" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 2 -->
+        <div id="tab2" class="tab-content">
+            <p class="question-text" id="question2">O que mais vale para Deus na prática do bem?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question2">
+                <label class="opcao-kahoot" id="label-opcao2-1">
+                    <input type="radio" name="resposta2" value="1" onclick="selecionarOpcao(2,1)" aria-label="O valor que doamos">
+                    <span>O valor que doamos</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao2-2">
+                    <input type="radio" name="resposta2" value="2" onclick="selecionarOpcao(2,2)" aria-label="A intenção com que fazemos o bem">
+                    <span>A intenção com que fazemos o bem</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao2-3">
+                    <input type="radio" name="resposta2" value="3" onclick="selecionarOpcao(2,3)" aria-label="A quantidade de pessoas ajudadas">
+                    <span>A quantidade de pessoas ajudadas</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao2-4">
+                    <input type="radio" name="resposta2" value="4" onclick="selecionarOpcao(2,4)" aria-label="O reconhecimento público">
+                    <span>O reconhecimento público</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 2" onclick="enviarResposta(2)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-2" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(3)">Próxima Pergunta</button>
+            <div id="timer2" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 3 -->
+        <div id="tab3" class="tab-content">
+            <div>
+                <p class="question-text" id="question3">Fora da caridade, não há salvação.</p>
+                <p class="question-subtext">A evolução espiritual depende da prática do amor e do bem.</p>
+            </div>
+            <div class="options-container" role="radiogroup" aria-labelledby="question3">
+                <label class="opcao-kahoot" id="label-opcao3-1">
+                    <input type="radio" name="resposta3" value="verdadeira" onclick="selecionarOpcao(3,1)" aria-label="Verdadeira">
+                    <span>Verdadeira</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao3-2">
+                    <input type="radio" name="resposta3" value="falsa" onclick="selecionarOpcao(3,2)" aria-label="Falsa">
+                    <span>Falsa</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 3" onclick="enviarResposta(3)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-3" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(4)">Próxima Pergunta</button>
+            <div id="timer3" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 4 -->
+        <div id="tab4" class="tab-content">
+            <p class="question-text" id="question4">Qual atitude demonstra verdadeiro amor ao próximo?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question4">
+                <label class="opcao-kahoot" id="label-opcao4-1">
+                    <input type="radio" name="resposta4" value="1" onclick="selecionarOpcao(4,1)" aria-label="Ajudar só quando é conveniente">
+                    <span>Ajudar só quando é conveniente</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao4-2">
+                    <input type="radio" name="resposta4" value="2" onclick="selecionarOpcao(4,2)" aria-label="Tratar todos com respeito e com bondade">
+                    <span>Tratar todos com respeito e com bondade</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao4-3">
+                    <input type="radio" name="resposta4" value="3" onclick="selecionarOpcao(4,3)" aria-label="Esperar reconhecimento dos outros">
+                    <span>Esperar reconhecimento dos outros</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao4-4">
+                    <input type="radio" name="resposta4" value="4" onclick="selecionarOpcao(4,4)" aria-label="Criticar quem não ajuda">
+                    <span>Criticar quem não ajuda</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao4-5">
+                    <input type="radio" name="resposta4" value="5" onclick="selecionarOpcao(4,5)" aria-label="Ignorar quem precisa">
+                    <span>Ignorar quem precisa</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 4" onclick="enviarResposta(4)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-4" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(5)">Próxima Pergunta</button>
+            <div id="timer4" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 5 -->
+        <div id="tab5" class="tab-content">
+            <p class="question-text" id="question5">Por que o bem deve ser feito discretamente, sem orgulho?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question5">
+                <label class="opcao-kahoot" id="label-opcao5-1">
+                    <input type="radio" name="resposta5" value="1" onclick="selecionarOpcao(5,1)" aria-label="Porque assim ninguém percebe">
+                    <span>Porque assim ninguém percebe</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao5-2">
+                    <input type="radio" name="resposta5" value="2" onclick="selecionarOpcao(5,2)" aria-label="Porque evita vaidade e mostra humildade">
+                    <span>Porque evita vaidade e mostra humildade</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao5-3">
+                    <input type="radio" name="resposta5" value="3" onclick="selecionarOpcao(5,3)" aria-label="Porque perde o valor se for público">
+                    <span>Porque perde o valor se for público</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao5-4">
+                    <input type="radio" name="resposta5" value="4" onclick="selecionarOpcao(5,4)" aria-label="Porque deve ser segredo absoluto">
+                    <span>Porque deve ser segredo absoluto</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 5" onclick="enviarResposta(5)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-5" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(6)">Próxima Pergunta</button>
+            <div id="timer5" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 6 -->
+        <div id="tab6" class="tab-content">
+            <p class="question-text" id="question6">No espiritismo, a prática do bem deve ser feita:</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question6">
+                <label class="opcao-kahoot" id="label-opcao6-1">
+                    <input type="radio" name="resposta6" value="1" onclick="selecionarOpcao(6,1)" aria-label="Apenas na casa espírita">
+                    <span>Apenas na casa espírita</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao6-2">
+                    <input type="radio" name="resposta6" value="2" onclick="selecionarOpcao(6,2)" aria-label="Em qualquer lugar e situação de vida">
+                    <span>Em qualquer lugar e situação de vida</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao6-3">
+                    <input type="radio" name="resposta6" value="3" onclick="selecionarOpcao(6,3)" aria-label="Só quando temos tempo">
+                    <span>Só quando temos tempo</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao6-4">
+                    <input type="radio" name="resposta6" value="4" onclick="selecionarOpcao(6,4)" aria-label="Apenas com amigos próximos">
+                    <span>Apenas com amigos próximos</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 6" onclick="enviarResposta(6)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-6" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(7)">Próxima Pergunta</button>
+            <div id="timer6" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 7 -->
+        <div id="tab7" class="tab-content">
+            <p class="question-text" id="question7">Porque ajudar os outros também ajuda a nós mesmos?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question7">
+                <label class="opcao-kahoot" id="label-opcao7-1">
+                    <input type="radio" name="resposta7" value="1" onclick="selecionarOpcao(7,1)" aria-label="Porque ganhamos recompensas espirituais">
+                    <span>Porque ganhamos recompensas espirituais</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao7-2">
+                    <input type="radio" name="resposta7" value="2" onclick="selecionarOpcao(7,2)" aria-label="Porque melhora nossa posição espiritual">
+                    <span>Porque melhora nossa posição espiritual</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao7-3">
+                    <input type="radio" name="resposta7" value="3" onclick="selecionarOpcao(7,3)" aria-label="Porque toda ação gera consequências espirituais para quem pratica">
+                    <span>Porque toda ação gera consequências espirituais para quem pratica</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao7-4">
+                    <input type="radio" name="resposta7" value="4" onclick="selecionarOpcao(7,4)" aria-label="Porque assim as pessoas ficam nos devendo favores">
+                    <span>Porque assim as pessoas ficam nos devendo favores</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 7" onclick="enviarResposta(7)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-7" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(8)">Próxima Pergunta</button>
+            <div id="timer7" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 8 -->
+        <div id="tab8" class="tab-content">
+            <p class="question-text" id="question8">Segundo o Evangelho Segundo o Espiritismo, qual é a caridade mais difícil?</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question8">
+                <label class="opcao-kahoot" id="label-opcao8-1">
+                    <input type="radio" name="resposta8" value="1" onclick="selecionarOpcao(8,1)" aria-label="Dar esmolas">
+                    <span>Dar esmolas</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao8-2">
+                    <input type="radio" name="resposta8" value="2" onclick="selecionarOpcao(8,2)" aria-label="Ajudar com alimentos">
+                    <span>Ajudar com alimentos</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao8-3">
+                    <input type="radio" name="resposta8" value="3" onclick="selecionarOpcao(8,3)" aria-label="Perdoar as ofensas">
+                    <span>Perdoar as ofensas</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao8-4">
+                    <input type="radio" name="resposta8" value="4" onclick="selecionarOpcao(8,4)" aria-label="Ensinar a doutrina espírita">
+                    <span>Ensinar a doutrina espírita</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 8" onclick="enviarResposta(8)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-8" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(9)">Próxima Pergunta</button>
+            <div id="timer8" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 9 -->
+        <div id="tab9" class="tab-content">
+            <p class="question-text" id="question9">Quando praticamos o bem em silêncio, sem esperar reconhecimento, estamos exercendo:</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question9">
+                <label class="opcao-kahoot" id="label-opcao9-1">
+                    <input type="radio" name="resposta9" value="1" onclick="selecionarOpcao(9,1)" aria-label="Orgulho">
+                    <span>Orgulho</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao9-2">
+                    <input type="radio" name="resposta9" value="2" onclick="selecionarOpcao(9,2)" aria-label="Humildade verdadeira">
+                    <span>Humildade verdadeira</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao9-3">
+                    <input type="radio" name="resposta9" value="3" onclick="selecionarOpcao(9,3)" aria-label="Egoísmo">
+                    <span>Egoísmo</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao9-4">
+                    <input type="radio" name="resposta9" value="4" onclick="selecionarOpcao(9,4)" aria-label="Vaidade disfarçada">
+                    <span>Vaidade disfarçada</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 9" onclick="enviarResposta(9)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-9" style="display:none;" aria-label="Ir para a próxima pergunta" onclick="showTab(10)">Próxima Pergunta</button>
+            <div id="timer9" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+
+        <!-- Tab 10 -->
+        <div id="tab10" class="tab-content">
+            <p class="question-text" id="question10">No espiritismo, o bem que fazemos beneficia somente quem recebe ajuda</p>
+            <div class="options-container" role="radiogroup" aria-labelledby="question10">
+                <label class="opcao-kahoot" id="label-opcao10-1">
+                    <input type="radio" name="resposta10" value="verdadeira" onclick="selecionarOpcao(10,1)" aria-label="Verdadeira">
+                    <span>Verdadeira</span>
+                </label>
+                <label class="opcao-kahoot" id="label-opcao10-2">
+                    <input type="radio" name="resposta10" value="falsa" onclick="selecionarOpcao(10,2)" aria-label="Falsa">
+                    <span>Falsa</span>
+                </label>
+            </div>
+            <button class="btn-save" aria-label="Enviar resposta da pergunta 10" onclick="enviarResposta(10)">Enviar</button>
+            <button class="btn-save" id="btn-proxima-10" style="display:none;" aria-label="Finalizar quiz" onclick="window.location.href='final.html'">Finalizar</button>
+            <div id="timer10" class="saudacao" style="color:#ff4f70;"></div>
+        </div>
+    </div>
+</body>
+</html>
