@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participante - Kahoot</title>
+    <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffe53b 0%, #fd3838 100%);
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.13);
+            padding: 38px 32px 32px 32px;
+            max-width: 410px;
+            width: 92vw;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            border: 4px solid #7c30dd;
+        }
+        .input-kahoot {
+            padding: 14px 18px;
+            border: 2px solid #7c30dd;
+            border-radius: 50px;
+            font-size: 1.08em;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            width: 90%;
+            max-width: 260px;
+            margin-bottom: 8px;
+            background: #f7f3ff;
+            color: #3a006a;
+            font-weight: 500;
+            text-align: center;
+        }
+        .input-kahoot:focus {
+            border: 2.5px solid #ff4f70;
+            box-shadow: 0 0 0 2px #ffe53b55;
+        }
+        .btn-save {
+            background: #ffe53b;
+            color: #7c30dd;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 1.08em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px rgba(255,229,59,0.10);
+            margin-top: 2px;
+        }
+        .btn-save:hover {
+            background: #ff4f70;
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+        }
+        .saudacao {
+            color: #7c30dd;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 10px;
+            min-height: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Digite seu nome para participar</h2>
+        <input type="text" id="nome" class="input-kahoot" placeholder="Seu nome">
+        <button class="btn-save" onclick="salvarNome()">Salvar</button>
+        <button class="btn-save" onclick="prosseguir()">Prosseguir</button>
+        <div id="saudacao" class="saudacao"></div>
+    </div>
+  <script>
+async function salvarNome() {
+    const nome = document.getElementById('nome').value.trim();
+    const saudacao = document.getElementById('saudacao');
+    if (!nome) {
+        saudacao.textContent = 'Por favor, insira seu nome!';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3036/nomes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            saudacao.textContent = `Boa sorte, ${data.nome}! 🚀`;
+            localStorage.setItem('kahoot_nome', data.nome);
+            document.getElementById('nome').value = '';
+        } else {
+            const error = await response.json();
+            saudacao.textContent = `Erro: ${error.error}`;
+        }
+    } catch (err) {
+        saudacao.textContent = 'Erro ao conectar ao servidor!';
+        console.error('Erro:', err);
+    }
+}
+
+function prosseguir() {
+    const nome = localStorage.getItem('kahoot_nome');
+    if (!nome) {
+        alert('Por favor, insira seu nome antes de prosseguir!');
+        return;
+    }
+    window.location.href = 'participar.html';
+}
+</script>
+
+
+</body>
+</html>
