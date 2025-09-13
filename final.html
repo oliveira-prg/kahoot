@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fim do Quiz - Kahoot FAK</title>
+    <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffe53b 0%, #fd3838 100%);
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.13);
+            padding: 38px 32px 32px 32px;
+            max-width: 410px;
+            width: 92vw;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            border: 4px solid #7c30dd;
+        }
+        .final-msg {
+            color: #7c30dd;
+            font-size: 1.35em;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .final-detail {
+            color: #ff4f70;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-align: center;
+        }
+        .btn-voltar {
+            background: #ffe53b;
+            color: #7c30dd;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 1.08em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px rgba(255,229,59,0.10);
+            margin-top: 24px;
+        }
+        .btn-voltar:hover {
+            background: #ff4f70;
+            color: #fff;
+            transform: translateY(-2px) scale(1.04);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="final-msg">
+            Parabéns! Você concluiu o quiz!
+        </div>
+        <div class="final-detail">
+            Aguarde os resultados.<br>
+        </div>
+        <button class="btn-voltar" onclick="window.location.href='kahoot.html'">Voltar ao início</button>
